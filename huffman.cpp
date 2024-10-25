@@ -116,7 +116,7 @@ std::string encode(std::string &inputStr) {
   std::string currentEncoding;
   HuffNode *HuffRoot = generateHuffTree(freqT);
   generateCharMap(HuffRoot, currentEncoding, charEncodings);
-  std::cout << "char\t" << "encoding" << std::endl;
+  std::cout << "Char\tEncodings" << std::endl;
   for (auto it : charEncodings) {
     std::cout << it.first << "\t" << it.second << std::endl;
   }
@@ -127,12 +127,34 @@ std::string encode(std::string &inputStr) {
 }
 
 int main(int argc, char *argv[]) {
-
-  std::string inputStr;
-  std::cout << "Enter String to be encoded: ";
-  std::cin >> inputStr;
-  printFreqTable(inputStr);
-  encode(inputStr);
-  //  std::cout << "\nENCODED STRING IS : " << encode(inputStr);
+  int option;
+  while (option != 2) {
+    std::cout << "\n-----------------------------------------------------------"
+                 "-----------------";
+    std::cout << "\n-----------WELCOME TO HUFFMAN ENCODING LOSSLESS "
+                 "COMPRESSION------------"
+              << std::endl;
+    std::cout << "SELECT AN OPTION\n1.ENCODE A STRING\n2.EXIT" << std::endl;
+    std::cout << "OPTION: " << std::endl;
+    std::cin >> option;
+    switch (option) {
+    case 1: {
+      std::string inputStr;
+      std::cout << "Enter String to be encoded: ";
+      std::cin >> inputStr;
+      // printFreqTable(inputStr);
+      std::string result;
+      result = encode(inputStr);
+      std::cout << "\nENCODED STRING IS : " << result;
+      break;
+    }
+    case 2:
+      break;
+    default: {
+      std::cout << "INCORRECT OPTION RECHOOSE" << std::endl;
+      break;
+    }
+    }
+  }
   return 0;
 }

@@ -1,12 +1,7 @@
-#include <cerrno>
-#include <cstddef>
-#include <cstdio>
 #include <iostream>
 #include <map>
-#include <ostream>
 #include <queue>
 #include <string>
-#include <unistd.h>
 #include <vector>
 
 /*
@@ -17,6 +12,7 @@
  *  - This provides lossless compression
  *  - higher occuring character will have smaller code and vice a versa
  *  - you need to return root of huffman tree to decode
+ *  - characters appearing with same frequencies can have interchangeable codes
  *
  */
 
@@ -49,29 +45,35 @@ struct HuffNode {
  * */
 class Compare {
 public:
-  bool operator()(HuffNode ele1, HuffNode ele2) {
-    return ele1.freq > ele2.freq; // comparator to sort in ascending order
+  bool operator()(HuffNode *ele1, HuffNode *ele2) {
+    return ele1->freq > ele2->freq; // comparator to sort in ascending order
   }
 };
 
-HuffNode generateHuffTree(std::map<char, int> frequencyTable) {
-  std::priority_queue<HuffNode, std::vector<HuffNode>, Compare> PriorityQueue;
+HuffNode *generateHuffTree(std::map<char, int> frequencyTable) {
+  std::priority_queue<HuffNode *, std::vector<HuffNode *>, Compare>
+      PriorityQueue;
   // push all HuffNodes into PriorityQueue
   for (auto it : frequencyTable) {
-    PriorityQueue.push(HuffNode(it.first, it.second, NULL, NULL));
-    std::cout << "element pushed\n";
-  }
-  if (PriorityQueue.size() >= 2) {
-    //    std::cout << PriorityQueue.top().c << ":" << PriorityQueue.top().freq;
-    auto least1 = PriorityQueue.top();
-    PriorityQueue.pop();
-    //   std::cout << PriorityQueue.top().c << ":" << PriorityQueue.top().freq;
-    auto least2 = PriorityQueue.top();
-    PriorityQueue.pop();
+    PriorityQueue.push(new HuffNode(it.first, it.second, NULL, NULL));
   }
 
+  HuffNode *least1, *least2;
+  //  std::cout << "NO SEF";
+  while (PriorityQueue.size() > 1) {
+    // std::cout << PriorityQueue.top()->c << ":" << PriorityQueue.top()->freq;
+    least1 = PriorityQueue.top();
+    PriorityQueue.pop();
+    // std::cout << PriorityQueue.top()->c << ":" << PriorityQueue.top()->freq;
+    least2 = PriorityQueue.top();
+    PriorityQueue.pop();
+    PriorityQueue.push(
+        new HuffNode('\0', least1->freq + least2->freq, least1, least2));
+  }
+  HuffNode *root;
+  root = PriorityQueue.top();
   // pop the first two
-  return HuffNode();
+  return root;
 }
 
 std::map<char, int> calcFrequencies(std::string &inputStr) {
@@ -91,10 +93,38 @@ void printFreqTable(std::string &inputStr) {
   for (auto it : freqT) {
     std::cout << it.first << ": " << it.second << std::endl;
   }
-  generateHuffTree(freqT);
 }
 
-// std::string encode(std::string &inputStr) {}
+void generateCharMap(HuffNode *HuffRoot, std::string currentEncoding,
+                     std::map<char, std::string> &charMap) {
+  if (!HuffRoot)
+    return;
+  // if it is a terminal node -> it is a character node
+  if (!HuffRoot->leftchild && !HuffRoot->rightchild) {
+    charMap[HuffRoot->c] = currentEncoding;
+    return;
+  }
+
+  generateCharMap(HuffRoot->leftchild, currentEncoding + "0", charMap);
+  generateCharMap(HuffRoot->rightchild, currentEncoding + "1", charMap);
+}
+
+std::string encode(std::string &inputStr) {
+  std::string encoded_str;
+  std::map<char, int> freqT = calcFrequencies(inputStr);
+  std::map<char, std::string> charEncodings;
+  std::string currentEncoding;
+  HuffNode *HuffRoot = generateHuffTree(freqT);
+  generateCharMap(HuffRoot, currentEncoding, charEncodings);
+  std::cout << "char\t" << "encoding" << std::endl;
+  for (auto it : charEncodings) {
+    std::cout << it.first << "\t" << it.second << std::endl;
+  }
+  for (auto ch : inputStr) {
+    encoded_str.append(charEncodings[ch]);
+  }
+  return encoded_str;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -102,6 +132,7 @@ int main(int argc, char *argv[]) {
   std::cout << "Enter String to be encoded: ";
   std::cin >> inputStr;
   printFreqTable(inputStr);
-  //  std::cout << encode(inputStr);
+  encode(inputStr);
+  //  std::cout << "\nENCODED STRING IS : " << encode(inputStr);
   return 0;
 }
